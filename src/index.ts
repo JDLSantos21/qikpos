@@ -227,21 +227,34 @@ class PrinterCommand {
   }
 }
 
-// Funciones principales para crear y enviar impresiones
+/**
+ * Función para crear una nueva instancia de PrinterCommand.
+ * @returns Una nueva instancia de PrinterCommand.
+ */
 const createInvoice = (): PrinterCommand => {
   return new PrinterCommand();
 };
 
+/**
+ *
+ *
+ * Recibe un objeto de tipo PrinterCommand y lo envía al servidor de impresión.
+ * @param invoice
+ * @description Objeto de tipo PrinterCommand que contiene los comandos de impresión.
+ * @param apiUrl
+ * @description URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @returns
+ */
 const print = async (
   invoice: PrinterCommand,
-  endpoint: string = "http://localhost:8080/api/printer/print"
+  apiUrl: string = "http://localhost:8080"
 ): Promise<{ success: boolean; message: string }> => {
   try {
     // Construir los comandos (esperar a que se procesen las imágenes)
     const commands = await invoice.build();
 
     // Enviar al servidor
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${apiUrl}/api/printer/print`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -272,13 +285,151 @@ const print = async (
   }
 };
 
+/**
+ * Función para obtener la lista de impresoras disponibles.
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @returns Un objeto que contiene el estado de la peticion y la lista de impresoras.
+ */
+async function getPrinters(
+  apiUrl: string = "http://localhost:8080"
+): Promise<{ success: boolean; printers: string[] }> {
+  try {
+    const response = await fetch(`${apiUrl}/api/printer/list`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        printers: [],
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      printers: data.data,
+    };
+  } catch (error) {
+    console.error("Error fetching printers:", error);
+    return {
+      success: false,
+      printers: [],
+    };
+  }
+}
+
+/**
+ * Función para seleccionar una impresora específica.
+ * @param printerName Nombre de la impresora a seleccionar.
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @returns Un objeto que contiene el estado de la peticion y el nombre de la impresora seleccionada.
+ */
+async function selectPrinter(
+  printerName: string,
+  apiUrl: string = "http://localhost:8080"
+): Promise<{
+  success: boolean;
+  message: string;
+  printer?: string;
+}> {
+  try {
+    const response = await fetch(`${apiUrl}/api/printer/select`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ printerName }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        message: `Error: ${response.status} - ${errorText}`,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      message: data.message,
+      printer: data.data,
+    };
+  } catch (error) {
+    console.error("Error selecting printer:", error);
+    return {
+      success: false,
+      message: `Error: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    };
+  }
+}
+
+/**
+ * Función para obtener la impresora seleccionada actualmente.
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @returns Un objeto que contiene el estado de la peticion y el nombre de la impresora seleccionada.
+ */
+async function getSelectedPrinter(
+  apiUrl: string = "http://localhost:8080"
+): Promise<{ success: boolean; printer?: string; message: string }> {
+  try {
+    const response = await fetch(`${apiUrl}/api/printer/selected`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        message: `Error: ${response.status} - ${errorText}`,
+        success: false,
+        printer: undefined,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      message: data.message,
+      printer: data.data,
+    };
+  } catch (error) {
+    console.error("Error fetching selected printer:", error);
+    return {
+      success: false,
+      message: `No se pudo obtener la impresora seleccionada`,
+      printer: undefined,
+    };
+  }
+}
+
 // Exportar todo como parte del objeto principal y también como módulos individuales
-export { CMD, PrinterCommand, createInvoice, print };
+export {
+  CMD,
+  PrinterCommand,
+  createInvoice,
+  print,
+  getPrinters,
+  selectPrinter,
+  getSelectedPrinter,
+};
 
 // Exportación por defecto
 const QikPOS = {
   createInvoice,
   print,
+  getPrinters,
+  selectPrinter,
+  getSelectedPrinter,
   CMD,
 };
 
