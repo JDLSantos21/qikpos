@@ -11,42 +11,28 @@ import {
   PrintStyleSchema,
 } from "./types";
 
-// Utilidad para convertir imágenes a Base64
-const imageToBase64 = async (url: string): Promise<string> => {
-  // En un entorno de navegador
-  if (typeof window !== "undefined") {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0);
-        const dataURL = canvas.toDataURL("image/png");
-        resolve(dataURL.split(",")[1]);
-      };
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = url;
-    });
-  }
-  // En entorno Node.js
-  else {
-    try {
-      // Si estamos en un entorno Node.js, usamos fs
-      const fs = await import("fs").catch(() => undefined);
-      if (fs) {
-        const data = await fs.promises.readFile(url);
-        return Buffer.from(data).toString("base64");
-      }
-      throw new Error("File system not available");
-    } catch (error) {
-      console.error("Error converting image to base64:", error);
-      throw error;
-    }
-  }
-};
+// Importar utilidades compartidas
+import { imageToBase64 } from "./utils";
+
+// Importar los módulos de etiquetas
+import {
+  createLabel,
+  printLabel,
+  printZPL,
+  printRaw,
+  getLabelPrinters,
+  selectLabelPrinter,
+  getSelectedLabelPrinter,
+} from "./labelService";
+
+import { LabelPrinterCommand } from "./LabelCommand";
+
+import {
+  LabelCommand,
+  LabelPrintRequest,
+  ZPLCommand,
+  RawCommand,
+} from "./types/label";
 
 // Clase para comandos individuales
 class CMD {
@@ -236,14 +222,10 @@ const createInvoice = (): PrinterCommand => {
 };
 
 /**
- *
- *
  * Recibe un objeto de tipo PrinterCommand y lo envía al servidor de impresión.
- * @param invoice
- * @description Objeto de tipo PrinterCommand que contiene los comandos de impresión.
- * @param apiUrl
- * @description URL del servidor de impresión. Por defecto es "http://localhost:8080"
- * @returns
+ * @param invoice Objeto de tipo PrinterCommand que contiene los comandos de impresión.
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @returns Promesa que se resuelve con el resultado de la impresión
  */
 const print = async (
   invoice: PrinterCommand,
@@ -421,16 +403,44 @@ export {
   getPrinters,
   selectPrinter,
   getSelectedPrinter,
+  imageToBase64,
+  // Exportar también las funcionalidades de etiquetas
+  createLabel,
+  printLabel,
+  printZPL,
+  printRaw,
+  getLabelPrinters,
+  selectLabelPrinter,
+  getSelectedLabelPrinter,
+  LabelPrinterCommand,
+  // Exportar tipos
+  LabelCommand,
+  LabelPrintRequest,
+  ZPLCommand,
+  RawCommand,
 };
 
 // Exportación por defecto
 const QikPOS = {
+  // Funcionalidades de impresora térmica ESC/POS
   createInvoice,
   print,
   getPrinters,
   selectPrinter,
   getSelectedPrinter,
   CMD,
+  imageToBase64,
+
+  // Funcionalidades de impresora de etiquetas
+  Label: {
+    create: createLabel,
+    print: printLabel,
+    printZPL,
+    printRaw,
+    getPrinters: getLabelPrinters,
+    selectPrinter: selectLabelPrinter,
+    getSelectedPrinter: getSelectedLabelPrinter,
+  },
 };
 
 export default QikPOS;
