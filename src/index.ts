@@ -11,6 +11,9 @@ import {
   PrintStyleSchema,
 } from "./types";
 
+// Constante para la URL base de la API
+const DEFAULT_API_URL = "http://localhost:30080";
+
 // Importar utilidades compartidas
 import { imageToBase64 } from "./utils";
 
@@ -224,12 +227,12 @@ const createInvoice = (): PrinterCommand => {
 /**
  * Recibe un objeto de tipo PrinterCommand y lo envía al servidor de impresión.
  * @param invoice Objeto de tipo PrinterCommand que contiene los comandos de impresión.
- * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:30080"
  * @returns Promesa que se resuelve con el resultado de la impresión
  */
 const print = async (
   invoice: PrinterCommand,
-  apiUrl: string = "http://localhost:8080"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; message: string }> => {
   try {
     // Construir los comandos (esperar a que se procesen las imágenes)
@@ -269,11 +272,11 @@ const print = async (
 
 /**
  * Función para obtener la lista de impresoras disponibles.
- * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:30080"
  * @returns Un objeto que contiene el estado de la peticion y la lista de impresoras.
  */
 async function getPrinters(
-  apiUrl: string = "http://localhost:8080"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; printers: string[] }> {
   try {
     const response = await fetch(`${apiUrl}/api/printer/list`, {
@@ -308,12 +311,12 @@ async function getPrinters(
 /**
  * Función para seleccionar una impresora específica.
  * @param printerName Nombre de la impresora a seleccionar.
- * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:30080"
  * @returns Un objeto que contiene el estado de la peticion y el nombre de la impresora seleccionada.
  */
 async function selectPrinter(
   printerName: string,
-  apiUrl: string = "http://localhost:8080"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{
   success: boolean;
   message: string;
@@ -355,11 +358,11 @@ async function selectPrinter(
 
 /**
  * Función para obtener la impresora seleccionada actualmente.
- * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:8080"
+ * @param apiUrl URL del servidor de impresión. Por defecto es "http://localhost:30080"
  * @returns Un objeto que contiene el estado de la peticion y el nombre de la impresora seleccionada.
  */
 async function getSelectedPrinter(
-  apiUrl: string = "http://localhost:8080"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; printer?: string; message: string }> {
   try {
     const response = await fetch(`${apiUrl}/api/printer/selected`, {

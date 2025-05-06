@@ -9,6 +9,8 @@ import {
 import { LabelPrinterCommand } from "./LabelCommand";
 import { imageToBase64 } from "./utils";
 
+const DEFAULT_API_URL = "http://localhost:30080";
+
 /**
  * Crea una nueva instancia de LabelPrinterCommand para construir una etiqueta
  * @param width Ancho de la etiqueta en pulgadas (por defecto 4)
@@ -29,12 +31,12 @@ const createLabel = (
 /**
  * Envía una solicitud de impresión de etiqueta al servidor
  * @param label Objeto LabelPrinterCommand o LabelPrintRequest con los comandos de etiqueta
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con el resultado de la impresión
  */
 const printLabel = async (
   label: LabelPrinterCommand | LabelPrintRequest,
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; message: string }> => {
   try {
     // Si es LabelPrinterCommand, construir la solicitud
@@ -79,14 +81,14 @@ const printLabel = async (
  * @param zplCode Código ZPL a imprimir
  * @param printerName Nombre de la impresora (opcional)
  * @param copies Número de copias (por defecto 1)
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con el resultado de la impresión
  */
 const printZPL = async (
   zplCode: string,
   printerName?: string,
   copies: number = 1,
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; message: string }> => {
   try {
     const command = ZPLCommandSchema.parse({
@@ -132,14 +134,14 @@ const printZPL = async (
  * @param rawData Datos en formato base64
  * @param printerName Nombre de la impresora (opcional)
  * @param copies Número de copias (por defecto 1)
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con el resultado de la impresión
  */
 const printRaw = async (
   rawData: string,
   printerName?: string,
   copies: number = 1,
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; message: string }> => {
   try {
     const command = RawCommandSchema.parse({
@@ -182,11 +184,11 @@ const printRaw = async (
 
 /**
  * Obtiene la lista de impresoras de etiquetas disponibles
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con la lista de impresoras
  */
 const getLabelPrinters = async (
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; printers: string[] }> => {
   try {
     const response = await fetch(`${apiUrl}/api/labelprinter/list`, {
@@ -220,12 +222,12 @@ const getLabelPrinters = async (
 /**
  * Selecciona una impresora de etiquetas como predeterminada
  * @param printerName Nombre de la impresora a seleccionar
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con el resultado de la selección
  */
 const selectLabelPrinter = async (
   printerName: string,
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; message: string; printer?: string }> => {
   try {
     const response = await fetch(`${apiUrl}/api/labelprinter/select`, {
@@ -263,11 +265,11 @@ const selectLabelPrinter = async (
 
 /**
  * Obtiene la impresora de etiquetas seleccionada actualmente
- * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:5003"
+ * @param apiUrl URL del servidor de impresión. Por defecto "http://localhost:30080"
  * @returns Promesa que se resuelve con la impresora seleccionada
  */
 const getSelectedLabelPrinter = async (
-  apiUrl: string = "http://localhost:5003"
+  apiUrl: string = DEFAULT_API_URL
 ): Promise<{ success: boolean; printer?: string; message: string }> => {
   try {
     const response = await fetch(`${apiUrl}/api/labelprinter/selected`, {
