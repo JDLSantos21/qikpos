@@ -1,12 +1,45 @@
 // src/LabelCommand.ts
+import { BarcodeType } from "./types";
 import {
   LabelCommand,
   LabelPrintRequest,
   LabelPrintRequestSchema,
+  BarcodeOptions,
+  BarcodeOptionsSchema,
+  BarcodeTypes,
+  TextCommand,
 } from "./types/label";
 
 // Utilidad para convertir imágenes a Base64 (importada desde el módulo principal)
 import { imageToBase64 } from "./utils";
+
+/**
+ * TIPOS DE CÓDIGOS DE BARRAS SOPORTADOS:
+ *
+ * "128" - Code 128: Código de barras de alta densidad que puede codificar todos los caracteres ASCII
+ * "39" - Code 39: Código alfanumérico ampliamente usado en industria
+ * "EAN13" - EAN-13: Estándar internacional para códigos de productos (13 dígitos)
+ * "EAN8" - EAN-8: Versión corta de EAN para productos pequeños (8 dígitos)
+ * "UPCA" - UPC-A: Estándar americano para códigos de productos (12 dígitos)
+ * "UPCE" - UPC-E: Versión compacta de UPC-A (8 dígitos)
+ * "I25" - Interleaved 2 of 5: Código numérico de alta densidad
+ * "93" - Code 93: Evolución del Code 39 con mayor densidad
+ * "AZTEC" - Aztec Code: Código 2D de alta capacidad
+ * "DATAMATRIX" - Data Matrix: Código 2D compacto
+ * "PDF417" - PDF417: Código de barras 2D de alta capacidad
+ *
+ * PARÁMETROS DE ORIENTACIÓN:
+ * "N" - Normal (0°)
+ * "R" - Rotado 90° (Right)
+ * "I" - Invertido 180° (Inverted)
+ * "B" - Rotado 270° (Bottom)
+ *
+ * MODOS DE CODIFICACIÓN (Code 128):
+ * "N" - Numérico: Solo números (más eficiente para datos numéricos)
+ * "U" - Mayúsculas: Letras mayúsculas y números
+ * "A" - ASCII: Todos los caracteres ASCII (por defecto)
+ * "D" - UCC/EAN: Formato UCC/EAN específico
+ */
 
 /**
  * Clase principal para crear comandos de etiquetas ZPL
@@ -65,53 +98,91 @@ class LabelPrinterCommand {
    * @param x Posición X en puntos
    * @param y Posición Y en puntos
    * @param fontSize Tamaño de fuente (opcional, por defecto 20)
+   *
    * @param rotation Rotación en grados (0, 90, 180, 270)
+   * @param orientation Orientación del texto ("N", "R", "I", "B")
    * @returns La instancia actual de LabelPrinterCommand
    */
-  text(
-    text: string,
-    x: number,
-    y: number,
-    fontSize: number = 20,
-    rotation: number = 0
-  ): LabelPrinterCommand {
+  text(options: TextCommand): LabelPrinterCommand {
     this.commands.push({
       cmd: "text",
-      value: text,
-      x,
-      y,
-      fontSize,
-      rotation,
+      value: options.value,
+      x: options.x,
+      y: options.y,
+      fontSize: options.fontSize,
+      rotation: options.rotation,
+      orientation: options.orientation,
+      fontWidth: options.fontWidth,
     });
     return this;
   }
 
   /**
    * Agrega un código de barras a la etiqueta
-   * @param value Valor del código de barras
-   * @param x Posición X en puntos
-   * @param y Posición Y en puntos
-   * @param height Altura del código de barras (opcional, por defecto 50)
-   * @param type Tipo de código de barras (opcional, por defecto "128")
-   * @param width Ancho del código de barras (opcional, por defecto 2)
-   * @returns La instancia actual de LabelPrinterCommand
+   *
+   * @example
+   * // Usando objeto (recomendado)
+   * label.barcode({
+   *   value: "123456789",
+   *   x: 100,
+   *   y: 100,
+   *   height: 60,
+   *   type: "128",
+   *   orientation: "R",
+   *   printText: false
+   * });
+   *
+   * // Usando parámetros individuales (compatibilidad hacia atrás)
+   * label.barcode("123456789", 100, 100, 60, "128", 2, "R", false);
    */
   barcode(
-    value: string,
-    x: number,
-    y: number,
-    height: number = 50,
-    type: string = "128",
-    width: number = 2
+    optionsOrValue: BarcodeOptions | string,
+    x?: number,
+    y?: number,
+    height?: number,
+    type?: BarcodeTypes,
+    width?: number,
+    orientation?: "N" | "R" | "I" | "B",
+    printText?: boolean,
+    textAbove?: boolean,
+    checkDigit?: boolean,
+    mode?: "N" | "U" | "A" | "D"
   ): LabelPrinterCommand {
+    let options: BarcodeOptions;
+
+    // Si el primer parámetro es un string, usamos la firma legacy
+    if (typeof optionsOrValue === "string") {
+      options = {
+        value: optionsOrValue,
+        x: x!,
+        y: y!,
+        height: height ?? 50,
+        type: type ?? "128",
+        width: width ?? 2,
+        orientation: orientation ?? "N",
+        printText: printText ?? true,
+        textAbove: textAbove ?? false,
+        checkDigit: checkDigit ?? false,
+        mode: mode ?? "A",
+      };
+    } else {
+      // Validamos y aplicamos valores por defecto usando el schema
+      options = BarcodeOptionsSchema.parse(optionsOrValue);
+    }
+
     this.commands.push({
       cmd: "barcode",
-      value,
-      x,
-      y,
-      height,
-      type,
-      width,
+      value: options.value,
+      x: options.x,
+      y: options.y,
+      height: options.height,
+      type: options.type,
+      width: options.width,
+      orientation: options.orientation,
+      printText: options.printText,
+      textAbove: options.textAbove,
+      checkDigit: options.checkDigit,
+      mode: options.mode,
     });
     return this;
   }
@@ -287,13 +358,33 @@ class LabelPrinterCommand {
       await Promise.all(this.pendingImagePromises);
     }
 
+    // Filtrar comandos duplicados de códigos de barras con el mismo valor y posición
+    const filteredCommands: LabelCommand[] = [];
+    const seenBarcodes = new Set<string>();
+
+    for (const command of this.commands) {
+      if (command.cmd === "barcode") {
+        // Crear una clave única para el código de barras basada en valor, x, y
+        const barcodeKey = `${command.value}-${command.x}-${command.y}`;
+
+        if (!seenBarcodes.has(barcodeKey)) {
+          seenBarcodes.add(barcodeKey);
+          filteredCommands.push(command);
+        }
+        // Si ya existe, lo omitimos (es un duplicado)
+      } else {
+        // Para todos los demás comandos, los incluimos sin filtrar
+        filteredCommands.push(command);
+      }
+    }
+
     return LabelPrintRequestSchema.parse({
       printerName: this.printerName,
       width: this.width,
       height: this.height,
       dpi: this.dpi,
       copies: this.copies,
-      commands: this.commands,
+      commands: filteredCommands,
     });
   }
 }

@@ -22,7 +22,7 @@ Una librería rápida y moderna para impresión POS y ZPL que incluye soporte co
 npm install qikpos@latest
 ```
 
-## 🔥 Nuevo en v1.1.0 - Códigos de Barras Mejorados
+## 🔥 Nuevo en v1.1.2 - Códigos de Barras Mejorados
 
 ### Nueva Sintaxis con Objeto (Recomendada)
 
@@ -298,6 +298,8 @@ MIT License - ver [LICENSE](LICENSE) para más detalles.
 
 ## 🏷️ Versiones
 
+- **v1.1.2** - Documentación actualizada y mejoras en códigos de barras
+- **v1.1.1** - Deduplicación de códigos de barras
 - **v1.1.0** - Nueva sintaxis de códigos de barras + parámetros avanzados
 - **v1.0.5** - Funcionalidades básicas de impresión
 

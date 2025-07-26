@@ -135,12 +135,110 @@ async function example3() {
   // console.log("Resultado de impresión:", printResult);
 }
 
+// Ejemplo 4: Códigos de barras con nuevos parámetros avanzados
+async function example4() {
+  console.log("\nEjemplo 4: Códigos de barras con parámetros avanzados");
+
+  // Creamos una etiqueta para mostrar diferentes configuraciones de códigos de barras
+  const label = createLabel(4, 6, 203);
+
+  label
+    // Título
+    .text("EJEMPLOS DE CÓDIGOS DE BARRAS", 200, 50, 30)
+
+    // NUEVA SINTAXIS CON OBJETO (Recomendada)
+    .text("1. Code 128 - Usando objeto (sintaxis nueva):", 50, 120, 20)
+    .barcode({
+      value: "ABC123456",
+      x: 50,
+      y: 150,
+      height: 60,
+      type: "128",
+      width: 2,
+      orientation: "N",
+      printText: true,
+      textAbove: false,
+      checkDigit: false,
+      mode: "A",
+    })
+
+    // Code 128 rotado con objeto
+    .text("2. Code 128 - Rotado 90° usando objeto:", 50, 250, 20)
+    .barcode({
+      value: "XYZ789012",
+      x: 50,
+      y: 280,
+      height: 60,
+      type: "128",
+      orientation: "R",
+      printText: false,
+    })
+
+    // SINTAXIS LEGACY (Compatibilidad hacia atrás)
+    .text(
+      "3. Code 39 - Sintaxis legacy (parámetros individuales):",
+      50,
+      380,
+      20
+    )
+    .barcode("PRODUCT001", 50, 410, 60, "39", 2, "N", true, true, true, "A")
+
+    // EAN-13 con objeto simplificado (solo propiedades necesarias)
+    .text("4. EAN-13 - Objeto simplificado:", 50, 510, 20)
+    .barcode({
+      value: "1234567890123",
+      x: 50,
+      y: 540,
+      type: "EAN13",
+    })
+
+    // Code 128 modo numérico con objeto
+    .text("5. Code 128 - Modo numérico optimizado:", 50, 640, 20)
+    .barcode({
+      value: "1234567890",
+      x: 50,
+      y: 670,
+      height: 60,
+      type: "128",
+      mode: "N",
+      printText: true,
+      textAbove: false,
+    })
+
+    // Información adicional
+    .line(50, 780, 750, 780, 1)
+    .text("Sintaxis disponibles:", 50, 810, 20)
+    .text(
+      "• Nueva (objeto): .barcode({ value: '123', x: 50, y: 50 })",
+      70,
+      840,
+      16
+    )
+    .text("• Legacy: .barcode('123', 50, 50, height, type, ...)", 70, 865, 16)
+    .text("• Objeto permite omitir parámetros opcionales", 70, 890, 16)
+    .text("• Validación automática con valores por defecto", 70, 915, 16);
+
+  // Para imprimir la etiqueta, descomenta la siguiente línea:
+  // const result = await printLabel(label);
+  // console.log("Resultado:", result);
+
+  // Mostrar el objeto de solicitud para debugging
+  const buildResult = await label.build();
+  console.log(
+    "Comandos generados:",
+    JSON.stringify(buildResult.commands, null, 2)
+  );
+
+  return buildResult;
+}
+
 // Ejecutar los ejemplos secuencialmente
 export async function runExamples() {
   try {
     await example1();
     // await example2();
     // await example3();
+    await example4(); // Nuevo ejemplo con códigos de barras avanzados
     console.log("\nEjemplos completados!");
   } catch (error) {
     console.error("Error al ejecutar ejemplos:", error);

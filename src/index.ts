@@ -35,6 +35,7 @@ import {
   LabelPrintRequest,
   ZPLCommand,
   RawCommand,
+  BarcodeOptions,
 } from "./types/label";
 
 // Clase para comandos individuales
@@ -421,6 +422,7 @@ export {
   LabelPrintRequest,
   ZPLCommand,
   RawCommand,
+  BarcodeOptions,
 };
 
 // Exportación por defecto
